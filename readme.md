@@ -2,16 +2,16 @@
 # Modulator
 
 <a href="http://www.youtube.com/watch?feature=player_embedded&v=n-txrCMvdms" target="_blank"><img src="http://img.youtube.com/vi/n-txrCMvdms/0.jpg"
-alt="Video Introduction To The Modulator Crate And Play Application" width="240" height="180" border="2" /></a>
+alt="CLICK HERE for a Video Introduction To The Modulator Crate And Play Application" width="240" height="180" border="2" /></a>
+
+[CLICK HERE to go to the Modulator Play application repository](https://github.com/apessino/modulator_play)
 
 A trait for abstracted, decoupled modulation sources. This crate includes:
 
   1. The `Modulator<T>` trait definition
   2. An environment (host) type for modulators `ModulatorEnv<T>`
   3. A number of ready to use types that implement the modulator trait
-
-[Modulator Play repository](https://github.com/apessino/modulator_play)
-
+  
 **Introduction**
 -----
 
