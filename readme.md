@@ -9,6 +9,7 @@ A trait for abstracted, decoupled modulation sources. This crate includes:
   1. The `Modulator<T>` trait definition
   2. An environment (host) type for modulators `ModulatorEnv<T>`
   3. A number of ready to use types that implement the modulator trait
+
 **Introduction**
 -----
 
