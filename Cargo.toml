@@ -1,5 +1,4 @@
 [package]
-
 name = "modulator"
 version = "0.1.0"
 
@@ -7,7 +6,7 @@ description = "A trait for abstracted, decoupled modulation sources"
 authors = ["Andrea Pessino <andrea@readyatdawn.com>"]
 categories = ["simulation", "game-engines", "gui"]
 
-keywords = ["modulation", "LFO", "wave", "generator", "animation", "spring", "physics", "game", "engine", "UI"]
+keywords = ["animation", "spring", "physics", "game", "engine"]
 
 license  = "MIT"
 repository = "https://github.com/apessino/modulator"
