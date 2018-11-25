@@ -8,7 +8,6 @@
 extern crate rand;
 
 use sources::rand::prelude::*;
-use std::any::Any;
 use std::f32;
 
 use Modulator;
@@ -19,15 +18,21 @@ use ModulatorEnv;
 /// closure receives self, elapsed time (in seconds) and returns a new value.
 //
 pub struct Wave {
+    /// wave amplitude
     pub amplitude: f32,
+    /// wave frequency
     pub frequency: f32,
 
-    pub wave: Box<Fn(&Wave, f32) -> f32>, // wave closure, receives self and time in s
+    /// wave closure, receives self and time in seconds
+    pub wave: Box<Fn(&Wave, f32) -> f32>,
 
-    pub time: u64,  // accumulated microseconds
-    pub value: f32, // current value
+    /// accumulated microseconds
+    pub time: u64,
+    /// current value
+    pub value: f32,
 
-    pub enabled: bool, // enabling toggle
+    /// enabling toggle
+    pub enabled: bool,
 }
 
 impl Wave {
@@ -73,9 +78,6 @@ impl Modulator<f32> for Wave {
     fn elapsed_us(&self) -> u64 {
         self.time
     }
-    fn as_any(&mut self) -> &mut Any {
-        self
-    }
 
     fn enabled(&self) -> bool {
         self.enabled
@@ -100,16 +102,23 @@ impl Modulator<f32> for Wave {
 ///
 
 pub struct ScalarSpring {
-    pub smooth: f32, // spring delay (smoothing), in seconds
-    pub undamp: f32, // artificial undamping (adds overshoot)
+    /// spring delay (smoothing), in seconds
+    pub smooth: f32,
+    /// artificial undamping (adds overshoot)
+    pub undamp: f32,
 
-    pub goal: f32,  // current target for the spring
-    pub value: f32, // current position of the spring (value)
+    /// current target for the spring
+    pub goal: f32,
+    /// current position of the spring (value)
+    pub value: f32,
 
-    pub vel: f32,  // current velocity
-    pub time: u64, // accumulated microseconds
+    /// current velocity
+    pub vel: f32,
+    /// accumulated microseconds
+    pub time: u64,
 
-    pub enabled: bool, // enabling toggle
+    /// enabling toggle
+    pub enabled: bool,
 }
 
 impl ScalarSpring {
@@ -159,9 +168,6 @@ impl Modulator<f32> for ScalarSpring {
     fn elapsed_us(&self) -> u64 {
         self.time
     }
-    fn as_any(&mut self) -> &mut Any {
-        self
-    }
 
     fn enabled(&self) -> bool {
         self.enabled
@@ -209,21 +215,31 @@ impl Modulator<f32> for ScalarSpring {
 ///
 
 pub struct ScalarGoalFollower {
-    pub regions: Vec<[f32; 2]>, // set of regions to pick goals from
-    pub random_region: bool,    //  cycle regions randomly instead of sequentially
+    /// set of regions to pick goals from
+    pub regions: Vec<[f32; 2]>,
+    /// cycle regions randomly instead of sequentially
+    pub random_region: bool,
 
-    pub threshold: f32, // threshold to consider a goal reached and move on to next one
-    pub vel_threshold: f32, // as above, but for velocity
+    /// threshold to consider a goal reached and move on to next one
+    pub threshold: f32,
+    /// as above, but for velocity
+    pub vel_threshold: f32,
 
-    pub pause_range: [u64; 2], // range of pause microseconds to pick between goals
+    /// range of pause microseconds to pick between goals
+    pub pause_range: [u64; 2],
 
-    pub follower: Box<dyn Modulator<f32>>, // the modulator that follows the current goal
+    /// the modulator that follows the current goal
+    pub follower: Box<dyn Modulator<f32>>,
 
-    pub current_region: usize, // index of last region used to set the goal
-    pub paused_left: u64,      // when set, number of microseconds until the pause ends
-    pub time: u64,             // accumulated microseconds
+    /// index of last region used to set the goal
+    pub current_region: usize,
+    /// when set, number of microseconds until the pause ends
+    pub paused_left: u64,
+    /// accumulated microseconds
+    pub time: u64,
 
-    pub enabled: bool, // enabling toggle
+    /// enabling toggle
+    pub enabled: bool,
 }
 
 impl ScalarGoalFollower {
@@ -306,9 +322,6 @@ impl Modulator<f32> for ScalarGoalFollower {
     fn elapsed_us(&self) -> u64 {
         self.time
     }
-    fn as_any(&mut self) -> &mut Any {
-        self
-    }
 
     fn enabled(&self) -> bool {
         self.enabled
@@ -371,16 +384,23 @@ impl Modulator<f32> for ScalarGoalFollower {
 ///
 
 pub struct Newtonian {
-    pub speed_limit: [f32; 2], // max speed range, selected on new goal
+    /// max speed range, selected on new goal
+    pub speed_limit: [f32; 2],
 
-    pub acceleration: [f32; 2], // range of acceleration values selected on new goal
-    pub deceleration: [f32; 2], // range of deceleration values selected on new goal
+    /// range of acceleration values selected on new goal
+    pub acceleration: [f32; 2],
+    /// range of deceleration values selected on new goal
+    pub deceleration: [f32; 2],
 
-    pub goal: f32,  // current goal
-    pub value: f32, // current position of the particle (value)
+    /// current goal
+    pub goal: f32,
+    /// current position of the particle (value)
+    pub value: f32,
 
-    pub time: u64,     // accumulated microseconds since the most recent goal was set
-    pub enabled: bool, // enabling toggle
+    /// accumulated microseconds since the most recent goal was set
+    pub time: u64,
+    /// enabling toggle
+    pub enabled: bool,
 
     s: f32,      // speed selected for the current goal
     a: f32,      // accel selected towards the goal
@@ -525,9 +545,6 @@ impl Modulator<f32> for Newtonian {
     fn elapsed_us(&self) -> u64 {
         self.time
     }
-    fn as_any(&mut self) -> &mut Any {
-        self
-    }
 
     fn enabled(&self) -> bool {
         self.enabled
@@ -581,27 +598,40 @@ impl Modulator<f32> for Newtonian {
 ///
 
 pub struct ShiftRegister {
-    pub buckets: Vec<f32>, // current array of values
-    pub ages: Vec<u32>,    // symmetrical array of value ages (number of periods since updating)
+    /// current array of values
+    pub buckets: Vec<f32>,
+    /// symmetrical array of value ages (number of periods since updating)
+    pub ages: Vec<u32>,
 
-    pub value_range: [f32; 2], // range of values selected when picking a bucket value [..)
-    pub odds: f32, // odds of changing a bucket's value as it is left, 0..1 (0 = never, 1 = always)
-    pub age_range: [u32; 2], // min/max range over which the odds increase to 100%
+    /// range of values selected when picking a bucket value [..)
+    pub value_range: [f32; 2],
+    /// odds of changing a bucket's value as it is left, 0..1 (0 = never, 1 = always)
+    pub odds: f32,
+    /// min/max range over which the odds increase to 100%
+    pub age_range: [u32; 2],
 
-    pub period: f32,                 // duration of a register loop, in seconds
-    pub interp: ShiftRegisterInterp, // interpolation type
+    /// duration of a register loop, in seconds
+    pub period: f32,
+    /// interpolation type
+    pub interp: ShiftRegisterInterp,
 
-    pub time: u64,  // accumulated microseconds, local time within the register loop
-    pub value: f32, // current value
+    /// accumulated microseconds, local time within the register loop
+    pub time: u64,
+    /// current value
+    pub value: f32,
 
-    pub enabled: bool, // enabling toggle
+    /// enabling toggle
+    pub enabled: bool,
 }
 
 /// Available choices of interpolation for shift registers
 pub enum ShiftRegisterInterp {
-    Linear,    // linearly interpolate between samples
-    Quadratic, // quadratic interpolation between the samples
-    None,      // no interpolation, buckets are read directly
+    /// linearly interpolate between samples
+    Linear,
+    /// quadratic interpolation between the samples
+    Quadratic,
+    /// no interpolation, buckets are read directly
+    None,
 }
 
 impl ShiftRegister {
@@ -697,9 +727,6 @@ impl Modulator<f32> for ShiftRegister {
 
     fn elapsed_us(&self) -> u64 {
         self.time
-    }
-    fn as_any(&mut self) -> &mut Any {
-        self
     }
 
     fn enabled(&self) -> bool {

@@ -1,3 +1,5 @@
+#![deny(missing_docs)]
+
 //!
 //! # Modulator
 //!
@@ -80,12 +82,16 @@
 //!
 //! Let `m` be a value of a type that implements the `Modulator` trait, then:
 //!
-//!     let value = m.value();
+//! ```ignore
+//! let value = m.value();
+//! ```
 //!
 //! returns the current value of the modulator. To evolve the modulator by `dt`
 //! microseconds use:
 //!
-//!     m.advance(dt);
+//! ```ignore
+//! m.advance(dt);
+//! ```
 //!
 //! In practice, the latter is rarely done directly, as using an _environment_ (a host
 //! for modulators) such as the included `ModulatorEnv` type, is much more convenient.
@@ -96,11 +102,13 @@
 //! The `ModulatorEnv<T>` type is an _owning host_ for modulators. Generally, you create
 //! one or more environments in your application, such as:
 //!
-//!     // Somewhere in a struct...
-//!     m1: ModulatorEnv<f32>, // hosts modulators that give scalar f32 values
+//! ```ignore
+//! // Somewhere in a struct...
+//! m1: ModulatorEnv<f32>, // hosts modulators that give scalar f32 values
 //!
-//!     // Somewhere in constructor of that struct...
-//!     m1: ModulatorEnv::new(),
+//! // Somewhere in constructor of that struct...
+//! m1: ModulatorEnv::new(),
+//! ```
 //!
 //! The above creates a modulator environment `m1` in a struct, probably a modulation
 //! struct that collects all state/data related to modulation for the app.
@@ -108,8 +116,10 @@
 //! Then, somewhere in the application, the environment must be _ticked_ forward by the
 //! elapsed `dt` microseconds of the current frame, like this:
 //!
-//!     // Here st is the modulation data struct that contains m1, dt is elapsed micros
-//!     st.m1.advance(dt);
+//! ```ignore
+//! // Here st is the modulation data struct that contains m1, dt is elapsed micros
+//! st.m1.advance(dt);
+//! ```
 //!
 //! The environment advances all the enabled modulators it hosts. It is important
 //! to notice two things about `ModulatorEnv`:
@@ -132,13 +142,15 @@
 //! amplitude and frequency values. Since it uses a closure it can actually make
 //! any signal: a waveform, a constant, a random number, etc. For example:
 //!
-//!     // Create a sine wave modulator, initial amplitude of 1 and frequency of 0.5Hz
-//!     let wave = Wave::new(1.0, 0.5).wave(Box::new(|w, t| {
-//!             (t * w.frequency * f32::consts::PI * 2.0).sin() * w.amplitude
-//!         }));
+//! ```ignore
+//! // Create a sine wave modulator, initial amplitude of 1 and frequency of 0.5Hz
+//! let wave = Wave::new(1.0, 0.5).wave(Box::new(|w, t| {
+//!         (t * w.frequency * f32::consts::PI * 2.0).sin() * w.amplitude
+//!     }));
 //!
-//!     // Give the modulator to the environment
-//!     st.m1.take("wave_sin", Box::new(wave));
+//! // Give the modulator to the environment
+//! st.m1.take("wave_sin", Box::new(wave));
+//! ```
 //!
 //! This creates a wave modulator that produces a sine with amplitude 1 and frequency
 //! of 0.5Hz. The closure receives the modulator `w` and elapsed time (t: `f32`) in
@@ -149,15 +161,17 @@
 //!
 //! Another example:
 //!
-//!     // Create a wave modulator, amplitude (2.0) here is used to define walk bounds,
-//!     // while frequency (0.1) is the random range the value moves each time it advances
-//!     let wave = Wave::new(2.0, 0.1).wave(Box::new(|w, _| {
-//!         let n = w.value + thread_rng().gen_range(-w.frequency, w.frequency);
-//!         f32::min(f32::max(n, -w.amplitude), w.amplitude)
-//!     }));
+//! ```ignore
+//! // Create a wave modulator, amplitude (2.0) here is used to define walk bounds,
+//! // while frequency (0.1) is the random range the value moves each time it advances
+//! let wave = Wave::new(2.0, 0.1).wave(Box::new(|w, _| {
+//!     let n = w.value + thread_rng().gen_range(-w.frequency, w.frequency);
+//!     f32::min(f32::max(n, -w.amplitude), w.amplitude)
+//! }));
 //!
-//!     // Now give the modulator to the environment
-//!     st.m1.take("wave_rnd", Box::new(wave));
+//! // Now give the modulator to the environment
+//! st.m1.take("wave_rnd", Box::new(wave));
+//! ```
 //!
 //! This closure offsets the modulator's current value each `advance(dt)` by a random
 //! offset (set by frequency) and caps it between -/+ amplitude. This creates a
@@ -166,8 +180,10 @@
 //! Once the modulators above have been created and given to the host, their value can be
 //! read anytime as follows:
 //!
-//!     let v0 = st.m1.value("wave_sin"); // current value of sine modulator
-//!     let v1 = st.m1.value("wave_rnd"); // current value of random walk modulator
+//! ```ignore
+//! let v0 = st.m1.value("wave_sin"); // current value of sine modulator
+//! let v1 = st.m1.value("wave_rnd"); // current value of random walk modulator
+//! ```
 //!
 //! **Modulator details**
 //! -----
@@ -235,9 +251,11 @@
 //! calculations at destination points, addressed by the symbolic name that was
 //! given to the host when added. For example:
 //!
-//!     // Here we are updating some value by scaling it with a modulator, source
-//!     // is the name of the modulator in environment m1
-//!     self.height = self.base + self.range * st.m1.value(source);
+//! ```ignore
+//! // Here we are updating some value by scaling it with a modulator, source
+//! // is the name of the modulator in environment m1
+//! self.height = self.base + self.range * st.m1.value(source);
+//! ```
 //!
 //! Still, at times you will want to access a modulator out of an environment and
 //! modify something about it, perhaps to modulate one of its settings
@@ -248,20 +266,24 @@
 //! amplitude of our previous `"wave_sin"` modulator by another modulator, in the
 //! same environment, called `"amp_mod"`:
 //!
-//!     let ampmod = st.m1.value("amp_mod"); // amplitude modulation value
-//!     if let Some(sw) = st.m1.get_mut("wave_sin") { // borrow trait object
-//!         if let Some(ss) = sw.as_any().downcast_mut::<Wave>() { // safely cast it
-//!             ss.amplitude = 1.0 + ampmod; // modify its amplitude attribute
-//!         }
+//! ```ignore
+//! let ampmod = st.m1.value("amp_mod"); // amplitude modulation value
+//! if let Some(sw) = st.m1.get_mut("wave_sin") { // borrow trait object
+//!     if let Some(ss) = sw.as_any().downcast_mut::<Wave>() { // safely cast it
+//!         ss.amplitude = 1.0 + ampmod; // modify its amplitude attribute
 //!     }
+//! }
+//! ```
 //!
 //! Here, we read the current value of `"amp_mod"` then we mutably borrow a reference
 //! to the `"wave_sin"` trait object. The `as_any()` method is part of the `Modulator`
-//! trait, so all modulators must implement this conversion, typically just like this:
+//! trait, so all modulators implement this conversion through a default trait method:
 //!
-//!     fn as_any(&mut self) -> &mut Any {
-//!         self
-//!     }
+//! ```ignore
+//! fn as_any(&mut self) -> &mut Any where Self: 'static + Sized {
+//!     self
+//! }
+//! ```
 //!
 //! Once the trait object has been converted into an `Any` we use the `downcast_mut`
 //! method to safely convert it to its original type, which of course must be known.
@@ -284,11 +306,13 @@
 //!
 //! Finally, notice the modulator enabled status methods:
 //!
-//!     /// Check if the modulator is disabled
-//!     fn enabled(&self) -> bool;
+//! ```ignore
+//! /// Check if the modulator is disabled
+//! fn enabled(&self) -> bool;
 //!
-//!     /// Toggle enabling/disabling the modulator
-//!     fn set_enabled(&mut self, enabled: bool);
+//! /// Toggle enabling/disabling the modulator
+//! fn set_enabled(&mut self, enabled: bool);
+//! ```
 //!
 //! Notice that `ModulatorEnv` checks the enabled status of its modulators and will
 //! __not__ advance them if they are disabled. This allows the pausing/unpausing of
@@ -393,7 +417,9 @@ pub trait Modulator<T> {
     fn elapsed_us(&self) -> u64;
 
     /// Allow donwcasting.
-    fn as_any(&mut self) -> &mut Any;
+    fn as_any(&mut self) -> &mut Any where Self: 'static + Sized {
+        self
+    }
 
     /// Check if the modulator is disabled
     fn enabled(&self) -> bool;
