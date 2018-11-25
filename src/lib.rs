@@ -15,7 +15,7 @@
 //!
 //! A trait for abstracted, decoupled modulation sources. This crate includes:
 //!
-//!   1. The `Modulator<T>` trait definition
+//!   1. The `Modulator` trait definition
 //!   2. An environment (host) type for modulators `ModulatorEnv<T>`
 //!   3. A number of ready to use types that implement the modulator trait
 //!
@@ -127,9 +127,9 @@
 //!   1. The environment owns the modulators it hosts
 //!   2. The environment is generic in the same value T as its hosted modulators
 //!
-//! Point 2 means that, since trait `Modulator<T>` is generic in T, the value type,
+//! Point 2 means that, since trait `Modulator<Value=T>` is generic in T, the value type,
 //! then all modulators in an environment must have the same T. All modulator types
-//! provided with this crate are `Modulator<f32>`, that is: their value is a scalar
+//! provided with this crate are `Modulator<Value=f32>`, that is: their value is a scalar
 //! of type `f32`.
 //!
 //! Point 1 means that the lifetime of the modulator is managed by the environment,
@@ -231,7 +231,7 @@
 //!
 //! A `ModulatorEnv` host only knows two things about the modulators it owns:
 //!
-//!   1. They implement `Modulator<T>`
+//!   1. They implement `Modulator<Value=T>`
 //!   2. They have the same `T` (value type)
 //!
 //! This means that the only operations the environment can perform on its modulators
@@ -243,7 +243,7 @@
 //! stored in an _owning_ environment).
 //!
 //! It is clear that `ModulatorEnv` contents are heterogeneous - the only thing they
-//! are known to have in common is that they `impl Modulator<T>` for the same `T` as
+//! are known to have in common is that they implement `Modulator<Value=T>` for the same `T` as
 //! the environment. This is a proper use case for Rust's **trait objects**, and
 //! in fact that's how `ModulatorEnv` stores the modulators it owns.
 //!
@@ -407,12 +407,15 @@ use std::time::Duration;
 pub mod sources;
 
 /// Modulators provide animated modulation. T is the generic type of the modulator value.
-pub trait Modulator<T> {
+pub trait Modulator {
+    /// The generic type of the modulator value.
+    type Value;
+
     /// Value of the modulator at the current time.
-    fn value(&self) -> T;
+    fn value(&self) -> Self::Value;
 
     /// Domain of the modulator as min..=max.
-    fn range(&self) -> [T; 2];
+    fn range(&self) -> [Self::Value; 2];
     /// Total accumulated microseconds for the modulator.
     fn elapsed_us(&self) -> u64;
 
@@ -427,9 +430,9 @@ pub trait Modulator<T> {
     fn set_enabled(&mut self, enabled: bool);
 
     /// Current goal of the modulator, if/when meaningful.
-    fn goal(&self) -> T;
+    fn goal(&self) -> Self::Value;
     /// Set a goal for the modulator to move towards, if possible.
-    fn set_goal(&mut self, goal: T);
+    fn set_goal(&mut self, goal: Self::Value);
 
     /// Move the modulator ahead by dt microseconds.
     fn advance(&mut self, dt: u64);
@@ -438,7 +441,7 @@ pub trait Modulator<T> {
 /// A host for modulators, homogeneous in type T for the value of its modulators
 #[derive(Default)]
 pub struct ModulatorEnv<T> {
-    mods: HashMap<String, Box<dyn Modulator<T>>>, // live modulators
+    mods: HashMap<String, Box<dyn Modulator<Value=T>>>, // live modulators
 }
 
 impl<T: Default> ModulatorEnv<T> {
@@ -450,7 +453,7 @@ impl<T: Default> ModulatorEnv<T> {
     }
 
     /// Given a unique key for the modulator, take ownership and hash it into mods table
-    pub fn take(&mut self, key: &str, modulator: Box<dyn Modulator<T>>) {
+    pub fn take(&mut self, key: &str, modulator: Box<dyn Modulator<Value=T>>) {
         self.mods.insert(key.to_string(), modulator);
     }
     /// Remove the modulator with given key, let it die
@@ -459,16 +462,16 @@ impl<T: Default> ModulatorEnv<T> {
     }
 
     /// Take an immutable reference to the mods table
-    pub fn get_mods(&self) -> &HashMap<String, Box<dyn Modulator<T>>> {
+    pub fn get_mods(&self) -> &HashMap<String, Box<dyn Modulator<Value=T>>> {
         &self.mods
     }
 
     /// Try to fetch an immutable reference to the modulator with the given  key
-    pub fn get(&self, key: &str) -> Option<&Box<dyn Modulator<T>>> {
+    pub fn get(&self, key: &str) -> Option<&Box<dyn Modulator<Value=T>>> {
         self.mods.get(key)
     }
     /// Try to fetch an mutable reference to the modulator with the given  key
-    pub fn get_mut(&mut self, key: &str) -> Option<&mut Box<dyn Modulator<T>>> {
+    pub fn get_mut(&mut self, key: &str) -> Option<&mut Box<dyn Modulator<Value=T>>> {
         self.mods.get_mut(key)
     }
 

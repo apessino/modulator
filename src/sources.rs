@@ -63,7 +63,9 @@ impl Wave {
     }
 }
 
-impl Modulator<f32> for Wave {
+impl Modulator for Wave {
+    type Value = f32;
+
     fn value(&self) -> f32 {
         self.value
     }
@@ -151,7 +153,9 @@ impl ScalarSpring {
     }
 }
 
-impl Modulator<f32> for ScalarSpring {
+impl Modulator for ScalarSpring {
+    type Value = f32;
+
     fn value(&self) -> f32 {
         self.value
     }
@@ -229,7 +233,7 @@ pub struct ScalarGoalFollower {
     pub pause_range: [u64; 2],
 
     /// the modulator that follows the current goal
-    pub follower: Box<dyn Modulator<f32>>,
+    pub follower: Box<dyn Modulator<Value=f32>>,
 
     /// index of last region used to set the goal
     pub current_region: usize,
@@ -244,7 +248,7 @@ pub struct ScalarGoalFollower {
 
 impl ScalarGoalFollower {
     /// Make a scalar goal follower
-    pub fn new(follower: Box<dyn Modulator<f32>>) -> Self {
+    pub fn new(follower: Box<dyn Modulator<Value=f32>>) -> Self {
         ScalarGoalFollower {
             regions: vec![],
             random_region: false,
@@ -288,7 +292,9 @@ impl ScalarGoalFollower {
     }
 }
 
-impl Modulator<f32> for ScalarGoalFollower {
+impl Modulator for ScalarGoalFollower {
+    type Value = f32;
+
     fn value(&self) -> f32 {
         self.follower.value()
     }
@@ -528,7 +534,9 @@ impl Newtonian {
     }
 }
 
-impl Modulator<f32> for Newtonian {
+impl Modulator for Newtonian {
+    type Value = f32;
+
     fn value(&self) -> f32 {
         self.value
     }
@@ -711,7 +719,9 @@ impl ShiftRegister {
     }
 }
 
-impl Modulator<f32> for ShiftRegister {
+impl Modulator for ShiftRegister {
+    type Value = f32;
+
     fn value(&self) -> f32 {
         self.value
     }
