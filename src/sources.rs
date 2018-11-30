@@ -9,6 +9,7 @@ extern crate rand;
 
 use sources::rand::prelude::*;
 use std::f32;
+use std::any::Any;
 
 use Modulator;
 use ModulatorEnv;
@@ -79,6 +80,10 @@ impl Modulator for Wave {
 
     fn elapsed_us(&self) -> u64 {
         self.time
+    }
+
+    fn as_any(&mut self) -> &mut Any {
+        self
     }
 
     fn enabled(&self) -> bool {
@@ -171,6 +176,10 @@ impl Modulator for ScalarSpring {
 
     fn elapsed_us(&self) -> u64 {
         self.time
+    }
+
+    fn as_any(&mut self) -> &mut Any {
+        self
     }
 
     fn enabled(&self) -> bool {
@@ -327,6 +336,10 @@ impl Modulator for ScalarGoalFollower {
 
     fn elapsed_us(&self) -> u64 {
         self.time
+    }
+
+    fn as_any(&mut self) -> &mut Any {
+        self
     }
 
     fn enabled(&self) -> bool {
@@ -554,6 +567,10 @@ impl Modulator for Newtonian {
         self.time
     }
 
+    fn as_any(&mut self) -> &mut Any {
+        self
+    }
+
     fn enabled(&self) -> bool {
         self.enabled
     }
@@ -737,6 +754,10 @@ impl Modulator for ShiftRegister {
 
     fn elapsed_us(&self) -> u64 {
         self.time
+    }
+
+    fn as_any(&mut self) -> &mut Any {
+        self
     }
 
     fn enabled(&self) -> bool {

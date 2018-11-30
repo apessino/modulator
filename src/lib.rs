@@ -420,9 +420,7 @@ pub trait Modulator {
     fn elapsed_us(&self) -> u64;
 
     /// Allow donwcasting.
-    fn as_any(&mut self) -> &mut Any where Self: 'static + Sized {
-        self
-    }
+    fn as_any(&mut self) -> &mut Any;
 
     /// Check if the modulator is disabled
     fn enabled(&self) -> bool;
