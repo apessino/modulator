@@ -418,7 +418,7 @@ pub struct ModulatorEnv<T> {
 impl<T: Default> ModulatorEnv<T> {
     /// Create an empty ModulatorEnv
     pub fn new() -> Self {
-        ModulatorEnv {
+        Self {
             mods: HashMap::new(),
         }
     }
