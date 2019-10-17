@@ -376,8 +376,9 @@
 //!
 //! Copyright© 2018 Ready At Dawn Studios
 
+use generational_arena::{Arena, Index};
+
 use std::any::Any;
-use std::collections::HashMap;
 use std::time::Duration;
 
 pub mod sources;
@@ -389,91 +390,112 @@ pub trait Modulator<T> {
 
     /// Domain of the modulator as min..=max.
     fn range(&self) -> [T; 2];
-    /// Total accumulated microseconds for the modulator.
-    fn elapsed_us(&self) -> u64;
-
-    /// Allow donwcasting.
-    fn as_any(&mut self) -> &mut Any;
-
-    /// Check if the modulator is disabled
-    fn enabled(&self) -> bool;
-    /// Toggle enabling/disabling the modulator
-    fn set_enabled(&mut self, enabled: bool);
-
-    /// Current goal of the modulator, if/when meaningful.
-    fn goal(&self) -> T;
-    /// Set a goal for the modulator to move towards, if possible.
-    fn set_goal(&mut self, goal: T);
 
     /// Move the modulator ahead by dt microseconds.
     fn advance(&mut self, dt: u64);
+
+    /// Total accumulated microseconds for the modulator.
+    fn elapsed_us(&self) -> u64;
+
+    /// Check if the modulator is disabled
+    fn enabled(&self) -> bool;
+
+    /// Toggle enabling/disabling the modulator
+    fn set_enabled(&mut self, enabled: bool);
+
+    /// Allow donwcasting.
+    fn as_any(&mut self) -> &mut dyn Any
+    where
+        Self: Sized + 'static,
+    {
+        self
+    }
+
+    /// Current goal of the modulator, if/when meaningful.
+    fn goal(&self) -> Option<T> {
+        None
+    }
+    /// Set a goal for the modulator to move towards, if possible.
+    fn set_goal(&mut self, _goal: T) {}
 }
 
+/// A handle to a specific Modulator within a ModulatorEnv.
+#[derive(Copy, Clone)]
+pub struct ModulatorHandle(Index);
+
 /// A host for modulators, homogeneous in type T for the value of its modulators
-#[derive(Default)]
 pub struct ModulatorEnv<T> {
-    mods: HashMap<String, Box<dyn Modulator<T>>>, // live modulators
+    mods: Arena<Box<dyn Modulator<T>>>, // live modulators
+}
+
+impl<T> Default for ModulatorEnv<T> {
+    fn default() -> Self {
+        ModulatorEnv { mods: Arena::new() }
+    }
 }
 
 impl<T: Default> ModulatorEnv<T> {
     /// Create an empty ModulatorEnv
     pub fn new() -> Self {
-        ModulatorEnv {
-            mods: HashMap::new(),
-        }
+        ModulatorEnv { mods: Arena::new() }
     }
 
-    /// Given a unique key for the modulator, take ownership and hash it into mods table
-    pub fn take(&mut self, key: &str, modulator: Box<dyn Modulator<T>>) {
-        self.mods.insert(key.to_string(), modulator);
+    /// Take ownership of a Modulator and store it within this environment, returning
+    /// a unique handle to it.
+    pub fn take(&mut self, modulator: Box<dyn Modulator<T>>) -> ModulatorHandle {
+        let index = self.mods.insert(modulator);
+        ModulatorHandle(index)
     }
+
     /// Remove the modulator with given key, let it die
-    pub fn kill(&mut self, key: &str) {
-        self.mods.remove(key); // ignore the return, let the value die
+    pub fn kill(&mut self, handle: ModulatorHandle) {
+        self.mods.remove(handle.0); // ignore the return, let the value die
     }
 
-    /// Take an immutable reference to the mods table
-    pub fn get_mods(&self) -> &HashMap<String, Box<dyn Modulator<T>>> {
+    /// Take a shared reference to the inner generational_arena which stores the modulators.
+    pub fn get_mods(&self) -> &Arena<Box<dyn Modulator<T>>> {
         &self.mods
     }
 
-    /// Try to fetch an immutable reference to the modulator with the given  key
-    pub fn get(&self, key: &str) -> Option<&Box<dyn Modulator<T>>> {
-        self.mods.get(key)
+    /// Try to fetch an immutable reference to the modulator with the given handle
+    pub fn get(&self, handle: ModulatorHandle) -> Option<&Box<dyn Modulator<T>>> {
+        self.mods.get(handle.0)
     }
-    /// Try to fetch an mutable reference to the modulator with the given  key
-    pub fn get_mut(&mut self, key: &str) -> Option<&mut Box<dyn Modulator<T>>> {
-        self.mods.get_mut(key)
+
+    /// Try to fetch an mutable reference to the modulator with the given handle
+    pub fn get_mut(&mut self, handle: ModulatorHandle) -> Option<&mut Box<dyn Modulator<T>>> {
+        self.mods.get_mut(handle.0)
     }
 
     /// Return the current value of the given modulator
-    pub fn value(&self, key: &str) -> T {
-        match self.get(key) {
+    pub fn value(&self, handle: ModulatorHandle) -> T {
+        match self.get(handle) {
             Some(modulator) if modulator.enabled() => modulator.value(),
             Some(_) => T::default(),
             None => T::default(),
         }
     }
+
     /// Return the range of the given modulator
-    pub fn range(&self, key: &str) -> [T; 2] {
-        match self.get(key) {
+    pub fn range(&self, handle: ModulatorHandle) -> [T; 2] {
+        match self.get(handle) {
             Some(modulator) if modulator.enabled() => modulator.range(),
             Some(_) => [T::default(), T::default()],
             None => [T::default(), T::default()],
         }
     }
+
     /// Return the current goal of the given modulator
-    pub fn goal(&self, key: &str) -> T {
-        match self.get(key) {
+    pub fn goal(&self, handle: ModulatorHandle) -> Option<T> {
+        match self.get(handle) {
             Some(modulator) if modulator.enabled() => modulator.goal(),
-            Some(_) => T::default(),
-            None => T::default(),
+            _ => None,
         }
     }
 
     /// Return the current value of the given modulator
-    pub fn elapsed_us(&self, key: &str) -> u64 {
-        match self.get(key) {
+    pub fn elapsed_us(&self, handle: ModulatorHandle) -> u64 {
+        match self.get(handle) {
             Some(modulator) => modulator.elapsed_us(),
             None => 0,
         }
@@ -481,9 +503,9 @@ impl<T: Default> ModulatorEnv<T> {
 
     /// Advance all owned modulators by dt microseconds
     pub fn advance(&mut self, dt: u64) {
-        for v in self.mods.values_mut() {
-            if v.enabled() {
-                v.advance(dt);
+        for (_, m) in self.mods.iter_mut() {
+            if m.enabled() {
+                m.advance(dt);
             }
         }
     }

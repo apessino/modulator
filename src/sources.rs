@@ -5,14 +5,12 @@
 //!
 //! Copyright© 2018 Ready At Dawn Studios
 
-extern crate rand;
-
-use sources::rand::prelude::*;
+use rand::prelude::*;
 use std::any::Any;
 use std::f32;
 
-use Modulator;
-use ModulatorEnv;
+use crate::Modulator;
+use crate::ModulatorEnv;
 
 ///
 /// Simple modulator using a value closure/`Fn`, with frequency and amplitude. The
@@ -22,7 +20,7 @@ pub struct Wave {
     pub amplitude: f32,
     pub frequency: f32,
 
-    pub wave: Box<Fn(&Wave, f32) -> f32>, // wave closure, receives self and time in s
+    pub wave: Box<dyn Fn(&Wave, f32) -> f32>, // wave closure, receives self and time in s
 
     pub time: u64,  // accumulated microseconds
     pub value: f32, // current value
@@ -47,13 +45,13 @@ impl Wave {
     }
 
     /// Builder: set the wave calculation closure
-    pub fn wave(mut self, wave: Box<Fn(&Wave, f32) -> f32>) -> Self {
+    pub fn wave(mut self, wave: Box<dyn Fn(&Wave, f32) -> f32>) -> Self {
         self.wave = wave;
         self
     }
 
     /// Builder: set the wave calculation closure
-    pub fn set_wave(&mut self, wave: Box<Fn(&Wave, f32) -> f32>) {
+    pub fn set_wave(&mut self, wave: Box<dyn Fn(&Wave, f32) -> f32>) {
         self.wave = wave;
     }
 }
@@ -62,24 +60,19 @@ impl Modulator<f32> for Wave {
     fn value(&self) -> f32 {
         self.value
     }
+
     fn range(&self) -> [f32; 2] {
         [-self.amplitude, self.amplitude]
     }
-    fn goal(&self) -> f32 {
-        self.value
-    }
-    fn set_goal(&mut self, _: f32) {}
 
     fn elapsed_us(&self) -> u64 {
         self.time
-    }
-    fn as_any(&mut self) -> &mut Any {
-        self
     }
 
     fn enabled(&self) -> bool {
         self.enabled
     }
+
     fn set_enabled(&mut self, enabled: bool) {
         self.enabled = enabled;
     }
@@ -149,9 +142,11 @@ impl Modulator<f32> for ScalarSpring {
     fn range(&self) -> [f32; 2] {
         [0.0, 0.0] // not meaningful for springs
     }
-    fn goal(&self) -> f32 {
-        self.goal
+
+    fn goal(&self) -> Option<f32> {
+        Some(self.goal)
     }
+
     fn set_goal(&mut self, goal: f32) {
         self.spring_to(goal);
     }
@@ -159,13 +154,11 @@ impl Modulator<f32> for ScalarSpring {
     fn elapsed_us(&self) -> u64 {
         self.time
     }
-    fn as_any(&mut self) -> &mut Any {
-        self
-    }
 
     fn enabled(&self) -> bool {
         self.enabled
     }
+
     fn set_enabled(&mut self, enabled: bool) {
         self.enabled = enabled;
     }
@@ -276,6 +269,7 @@ impl Modulator<f32> for ScalarGoalFollower {
     fn value(&self) -> f32 {
         self.follower.value()
     }
+
     fn range(&self) -> [f32; 2] {
         let mut r = if !self.regions.is_empty() {
             self.regions[0]
@@ -295,10 +289,11 @@ impl Modulator<f32> for ScalarGoalFollower {
         r
     }
 
-    fn goal(&self) -> f32 {
+    fn goal(&self) -> Option<f32> {
         // these just forward to the follower
         self.follower.goal()
     }
+
     fn set_goal(&mut self, goal: f32) {
         self.follower.set_goal(goal);
     }
@@ -306,7 +301,7 @@ impl Modulator<f32> for ScalarGoalFollower {
     fn elapsed_us(&self) -> u64 {
         self.time
     }
-    fn as_any(&mut self) -> &mut Any {
+    fn as_any(&mut self) -> &mut dyn Any {
         self
     }
 
@@ -334,7 +329,8 @@ impl Modulator<f32> for ScalarGoalFollower {
                 0.0
             };
 
-            if (p1 - self.follower.goal()).abs() > self.threshold || vel.abs() > self.vel_threshold
+            if (p1 - self.follower.goal().unwrap()).abs() > self.threshold
+                || vel.abs() > self.vel_threshold
             {
                 return; // still moving towards the goal
             }
@@ -512,12 +508,15 @@ impl Modulator<f32> for Newtonian {
     fn value(&self) -> f32 {
         self.value
     }
+
     fn range(&self) -> [f32; 2] {
         [0.0, 0.0] // not meaningful for these
     }
-    fn goal(&self) -> f32 {
-        self.goal
+
+    fn goal(&self) -> Option<f32> {
+        Some(self.goal)
     }
+
     fn set_goal(&mut self, goal: f32) {
         self.move_to(goal);
     }
@@ -525,13 +524,15 @@ impl Modulator<f32> for Newtonian {
     fn elapsed_us(&self) -> u64 {
         self.time
     }
-    fn as_any(&mut self) -> &mut Any {
+
+    fn as_any(&mut self) -> &mut dyn Any {
         self
     }
 
     fn enabled(&self) -> bool {
         self.enabled
     }
+
     fn set_enabled(&mut self, enabled: bool) {
         self.enabled = enabled;
     }
@@ -685,11 +686,13 @@ impl Modulator<f32> for ShiftRegister {
     fn value(&self) -> f32 {
         self.value
     }
+
     fn range(&self) -> [f32; 2] {
         self.value_range
     }
-    fn goal(&self) -> f32 {
-        self.value // not meaningful for these
+
+    fn goal(&self) -> Option<f32> {
+        None
     }
     fn set_goal(&mut self, _: f32) {
         // ignored
@@ -698,13 +701,15 @@ impl Modulator<f32> for ShiftRegister {
     fn elapsed_us(&self) -> u64 {
         self.time
     }
-    fn as_any(&mut self) -> &mut Any {
+
+    fn as_any(&mut self) -> &mut dyn Any {
         self
     }
 
     fn enabled(&self) -> bool {
         self.enabled
     }
+
     fn set_enabled(&mut self, enabled: bool) {
         self.enabled = enabled;
     }
