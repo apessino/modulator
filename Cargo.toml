@@ -1,6 +1,6 @@
 [package]
 name = "modulator"
-version = "0.1.0"
+version = "0.2.0"
 
 description = "A trait for abstracted, decoupled modulation sources"
 authors = ["Andrea Pessino <andrea@readyatdawn.com>"]
