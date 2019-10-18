@@ -393,7 +393,7 @@ pub trait Modulator<T> {
     fn elapsed_us(&self) -> u64;
 
     /// Allow donwcasting.
-    fn as_any(&mut self) -> &mut Any;
+    fn as_any(&mut self) -> &mut dyn Any;
 
     /// Check if the modulator is disabled
     fn enabled(&self) -> bool;
