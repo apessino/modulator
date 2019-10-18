@@ -387,26 +387,36 @@ pub trait Modulator<T> {
     /// Value of the modulator at the current time.
     fn value(&self) -> T;
 
-    /// Domain of the modulator as min..=max.
-    fn range(&self) -> [T; 2];
+    /// Move the modulator ahead by dt microseconds.
+    fn advance(&mut self, dt: u64);
+
     /// Total accumulated microseconds for the modulator.
     fn elapsed_us(&self) -> u64;
-
-    /// Allow donwcasting.
-    fn as_any(&mut self) -> &mut dyn Any;
 
     /// Check if the modulator is disabled
     fn enabled(&self) -> bool;
     /// Toggle enabling/disabling the modulator
     fn set_enabled(&mut self, enabled: bool);
 
-    /// Current goal of the modulator, if/when meaningful.
-    fn goal(&self) -> T;
-    /// Set a goal for the modulator to move towards, if possible.
-    fn set_goal(&mut self, goal: T);
+    /// Allow donwcasting.
+    fn as_any(&mut self) -> &'_ mut dyn Any
+    where
+        Self: Sized + 'static,
+    {
+        self
+    }
 
-    /// Move the modulator ahead by dt microseconds.
-    fn advance(&mut self, dt: u64);
+    /// Range of the modulator as min..=max, or None if the range is indeterminate.
+    fn range(&self) -> Option<[T; 2]> {
+        None
+    }
+
+    /// Current goal of the modulator, or None if not applicable.
+    fn goal(&self) -> Option<T> {
+        None
+    }
+    /// Set a goal for the modulator to move towards, if possible.
+    fn set_goal(&mut self, _goal: T) {}
 }
 
 /// A host for modulators, homogeneous in type T for the value of its modulators
@@ -454,20 +464,19 @@ impl<T: Default> ModulatorEnv<T> {
             None => T::default(),
         }
     }
+
     /// Return the range of the given modulator
-    pub fn range(&self, key: &str) -> [T; 2] {
+    pub fn range(&self, key: &str) -> Option<[T; 2]> {
         match self.get(key) {
             Some(modulator) if modulator.enabled() => modulator.range(),
-            Some(_) => [T::default(), T::default()],
-            None => [T::default(), T::default()],
+            _ => None,
         }
     }
     /// Return the current goal of the given modulator
-    pub fn goal(&self, key: &str) -> T {
+    pub fn goal(&self, key: &str) -> Option<T> {
         match self.get(key) {
             Some(modulator) if modulator.enabled() => modulator.goal(),
-            Some(_) => T::default(),
-            None => T::default(),
+            _ => None,
         }
     }
 

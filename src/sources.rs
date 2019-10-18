@@ -7,7 +7,6 @@
 
 use rand::prelude::*;
 
-use std::any::Any;
 use std::f32;
 
 use crate::Modulator;
@@ -61,21 +60,16 @@ impl Modulator<f32> for Wave {
     fn value(&self) -> f32 {
         self.value
     }
-    fn range(&self) -> [f32; 2] {
-        [-self.amplitude, self.amplitude]
+    fn range(&self) -> Option<[f32; 2]> {
+        Some([-self.amplitude, self.amplitude])
     }
-    fn goal(&self) -> f32 {
-        self.value
+    fn goal(&self) -> Option<f32> {
+        Some(self.value)
     }
-    fn set_goal(&mut self, _: f32) {}
 
     fn elapsed_us(&self) -> u64 {
         self.time
     }
-    fn as_any(&mut self) -> &mut dyn Any {
-        self
-    }
-
     fn enabled(&self) -> bool {
         self.enabled
     }
@@ -145,11 +139,8 @@ impl Modulator<f32> for ScalarSpring {
     fn value(&self) -> f32 {
         self.value
     }
-    fn range(&self) -> [f32; 2] {
-        [0.0, 0.0] // not meaningful for springs
-    }
-    fn goal(&self) -> f32 {
-        self.goal
+    fn goal(&self) -> Option<f32> {
+        Some(self.goal)
     }
     fn set_goal(&mut self, goal: f32) {
         self.spring_to(goal);
@@ -158,10 +149,6 @@ impl Modulator<f32> for ScalarSpring {
     fn elapsed_us(&self) -> u64 {
         self.time
     }
-    fn as_any(&mut self) -> &mut dyn Any {
-        self
-    }
-
     fn enabled(&self) -> bool {
         self.enabled
     }
@@ -275,7 +262,7 @@ impl Modulator<f32> for ScalarGoalFollower {
     fn value(&self) -> f32 {
         self.follower.value()
     }
-    fn range(&self) -> [f32; 2] {
+    fn range(&self) -> Option<[f32; 2]> {
         let mut r = if !self.regions.is_empty() {
             self.regions[0]
         } else {
@@ -291,10 +278,10 @@ impl Modulator<f32> for ScalarGoalFollower {
                 r[1] = j[1];
             }
         }
-        r
+        Some(r)
     }
 
-    fn goal(&self) -> f32 {
+    fn goal(&self) -> Option<f32> {
         // these just forward to the follower
         self.follower.goal()
     }
@@ -304,9 +291,6 @@ impl Modulator<f32> for ScalarGoalFollower {
 
     fn elapsed_us(&self) -> u64 {
         self.time
-    }
-    fn as_any(&mut self) -> &mut dyn Any {
-        self
     }
 
     fn enabled(&self) -> bool {
@@ -333,7 +317,8 @@ impl Modulator<f32> for ScalarGoalFollower {
                 0.0
             };
 
-            if (p1 - self.follower.goal()).abs() > self.threshold || vel.abs() > self.vel_threshold
+            if (p1 - self.follower.goal().unwrap()).abs() > self.threshold
+                || vel.abs() > self.vel_threshold
             {
                 return; // still moving towards the goal
             }
@@ -511,23 +496,10 @@ impl Modulator<f32> for Newtonian {
     fn value(&self) -> f32 {
         self.value
     }
-    fn range(&self) -> [f32; 2] {
-        [0.0, 0.0] // not meaningful for these
-    }
-    fn goal(&self) -> f32 {
-        self.goal
-    }
-    fn set_goal(&mut self, goal: f32) {
-        self.move_to(goal);
-    }
 
     fn elapsed_us(&self) -> u64 {
         self.time
     }
-    fn as_any(&mut self) -> &mut dyn Any {
-        self
-    }
-
     fn enabled(&self) -> bool {
         self.enabled
     }
@@ -684,21 +656,12 @@ impl Modulator<f32> for ShiftRegister {
     fn value(&self) -> f32 {
         self.value
     }
-    fn range(&self) -> [f32; 2] {
-        self.value_range
-    }
-    fn goal(&self) -> f32 {
-        self.value // not meaningful for these
-    }
-    fn set_goal(&mut self, _: f32) {
-        // ignored
+    fn range(&self) -> Option<[f32; 2]> {
+        Some(self.value_range)
     }
 
     fn elapsed_us(&self) -> u64 {
         self.time
-    }
-    fn as_any(&mut self) -> &mut dyn Any {
-        self
     }
 
     fn enabled(&self) -> bool {
