@@ -15,4 +15,5 @@ readme = "readme.md"
 edition = "2018"
 
 [dependencies]
+generational-arena = "0.2.3"
 rand = "0.7.2"
