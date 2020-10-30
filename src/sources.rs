@@ -8,6 +8,7 @@
 use rand::prelude::*;
 
 use std::f32;
+use std::any::Any;
 
 use crate::Modulator;
 use crate::ModulatorEnv;
@@ -80,6 +81,10 @@ impl Modulator<f32> for Wave {
     fn advance(&mut self, dt: u64) {
         self.time += dt;
         self.value = (self.wave)(self, ModulatorEnv::<f32>::micros_to_secs(self.time));
+    }
+
+    fn as_any(&mut self) -> &mut dyn Any {
+        self
     }
 }
 
@@ -177,6 +182,10 @@ impl Modulator<f32> for ScalarSpring {
             self.vel = (v - omega * t) * ex + v * ud;
             self.value = self.goal + (d + t) * ex;
         }
+    }
+
+    fn as_any(&mut self) -> &mut dyn Any {
+        self
     }
 }
 
@@ -333,6 +342,10 @@ impl Modulator<f32> for ScalarGoalFollower {
         if self.paused_left == 0 {
             self.set_new_goal(); // done pausing, resume following
         }
+    }
+
+    fn as_any(&mut self) -> &mut dyn Any {
+        self
     }
 }
 
@@ -520,6 +533,10 @@ impl Modulator<f32> for Newtonian {
                 self.value = self.value + Newtonian::accelerate(self.d, f32::min(t, t2) - t1);
             }
         }
+    }
+
+    fn as_any(&mut self) -> &mut dyn Any {
+        self
     }
 }
 
@@ -739,5 +756,9 @@ impl Modulator<f32> for ShiftRegister {
 
             ShiftRegisterInterp::None => self.value = self.buckets[bi],
         }
+    }
+
+    fn as_any(&mut self) -> &mut dyn Any {
+        self
     }
 }

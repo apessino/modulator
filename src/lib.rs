@@ -402,12 +402,7 @@ pub trait Modulator<T> {
     fn set_enabled(&mut self, enabled: bool);
 
     /// Allow donwcasting.
-    fn as_any(&mut self) -> &'_ mut dyn Any
-    where
-        Self: Sized + 'static,
-    {
-        self
-    }
+    fn as_any(&mut self) -> &mut dyn Any;
 
     /// Range of the modulator as min..=max, or None if the range is indeterminate.
     fn range(&self) -> Option<[T; 2]> {
@@ -451,11 +446,11 @@ impl<T: Default> ModulatorEnv<T> {
         &self.mods
     }
 
-    /// Try to fetch an immutable reference to the modulator with the given  key
+    /// Try to fetch an immutable reference to the modulator with the given key
     pub fn get(&self, key: &str) -> Option<&Box<dyn Modulator<T>>> {
         self.mods.get(key)
     }
-    /// Try to fetch an mutable reference to the modulator with the given  key
+    /// Try to fetch an mutable reference to the modulator with the given key
     pub fn get_mut(&mut self, key: &str) -> Option<&mut Box<dyn Modulator<T>>> {
         self.mods.get_mut(key)
     }
