@@ -32,7 +32,7 @@ pub struct Wave {
 impl Wave {
     /// Build a sin wave with given amplitude and frequency
     pub fn new(amplitude: f32, frequency: f32) -> Self {
-        Wave {
+        Self {
             amplitude,
             frequency,
 
@@ -113,7 +113,7 @@ pub struct ScalarSpring {
 impl ScalarSpring {
     /// Make a critically damped spring
     pub fn new(smooth: f32, undamp: f32, initial: f32) -> Self {
-        ScalarSpring {
+        Self {
             smooth,
             undamp,
 
@@ -224,7 +224,7 @@ pub struct ScalarGoalFollower {
 impl ScalarGoalFollower {
     /// Make a scalar goal follower
     pub fn new(follower: Box<dyn Modulator<f32>>) -> Self {
-        ScalarGoalFollower {
+        Self {
             regions: vec![],
             random_region: false,
 
@@ -394,7 +394,7 @@ impl Newtonian {
         deceleration: [f32; 2],
         initial: f32,
     ) -> Self {
-        Newtonian {
+        Self {
             speed_limit,
 
             acceleration,
@@ -604,7 +604,7 @@ impl ShiftRegister {
         let b = Self::new_buckets(buckets, &value_range);
         let v = if buckets > 0 { b[0] } else { 0.0 };
 
-        ShiftRegister {
+        Self {
             buckets: b,
             ages: vec![0; buckets],
 
