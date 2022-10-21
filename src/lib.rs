@@ -1,4 +1,3 @@
-//!
 //! # Modulator
 //!
 //! <a href="http://www.youtube.com/watch?feature=player_embedded&v=n-txrCMvdms"
@@ -373,15 +372,11 @@
 //!
 //! The result is that the shift register is periodic and exhibits a pattern (given low
 //! enough odds), but still evolves over time in an organic way.
-//!
-//! Copyright© 2018 Ready At Dawn Studios
-
-use generational_arena::Arena;
-use generational_arena::Index;
 
 use std::any::Any;
-use std::collections::HashMap;
 use std::time::Duration;
+
+use metrohash::MetroHashMap;
 
 pub mod sources;
 
@@ -421,14 +416,14 @@ pub trait Modulator<T> {
 /// stored in a HashMap for convenience and rapid prototyping.
 #[derive(Default)]
 pub struct ModulatorEnv<T> {
-    mods: HashMap<String, Box<dyn Modulator<T>>>, // live modulators
+    mods: MetroHashMap<String, Box<dyn Modulator<T>>>, // live modulators
 }
 
 impl<T: Default> ModulatorEnv<T> {
     /// Create an empty ModulatorEnv
     pub fn new() -> Self {
         ModulatorEnv {
-            mods: HashMap::new(),
+            mods: MetroHashMap::default(),
         }
     }
 
@@ -442,7 +437,7 @@ impl<T: Default> ModulatorEnv<T> {
     }
 
     /// Take an immutable reference to the mods table
-    pub fn get_mods(&self) -> &HashMap<String, Box<dyn Modulator<T>>> {
+    pub fn get_mods(&self) -> &MetroHashMap<String, Box<dyn Modulator<T>>> {
         &self.mods
     }
 
@@ -492,111 +487,6 @@ impl<T: Default> ModulatorEnv<T> {
         for v in self.mods.values_mut() {
             if v.enabled() {
                 v.advance(dt);
-            }
-        }
-    }
-
-    /// Convert a duration (secs+nanosecs) into total microseconds
-    pub fn duration_to_micros(time: Duration) -> u64 {
-        time.as_secs() * 1_000_000_u64 + u64::from(time.subsec_nanos()) / 1000_u64
-    }
-    /// Convert microseconds into floating point seconds
-    pub fn micros_to_secs(us: u64) -> f32 {
-        us as f32 / 1.0e6_f32
-    }
-    /// Convert a duration (secs+nanosecs) into floating point seconds
-    pub fn duration_to_secs(time: Duration) -> f32 {
-        Self::micros_to_secs(Self::duration_to_micros(time))
-    }
-}
-
-/// A handle to a specific Modulator within a ModulatorArenaEnv.
-#[derive(Copy, Clone)]
-pub struct ModulatorHandle(Index);
-
-/// A host for modulators, homogeneous in type T for the value of its modulator,
-/// stored in a Vec-like Arena data structure for faster lookup and iteration.
-pub struct ModulatorArenaEnv<T> {
-    mods: Arena<Box<dyn Modulator<T>>>, // live modulators
-}
-
-impl<T> Default for ModulatorArenaEnv<T> {
-    fn default() -> Self {
-        ModulatorArenaEnv { mods: Arena::new() }
-    }
-}
-
-impl<T: Default> ModulatorArenaEnv<T> {
-    /// Create an empty ModulatorEnv
-    pub fn new() -> Self {
-        ModulatorArenaEnv { mods: Arena::new() }
-    }
-
-    /// Take ownership of a Modulator and store it within this environment, returning
-    /// a unique handle to it.
-    pub fn take(&mut self, modulator: Box<dyn Modulator<T>>) -> ModulatorHandle {
-        let index = self.mods.insert(modulator);
-        ModulatorHandle(index)
-    }
-
-    /// Remove the modulator with given key, let it die
-    pub fn kill(&mut self, handle: ModulatorHandle) {
-        self.mods.remove(handle.0); // ignore the return, let the value die
-    }
-
-    /// Take a shared reference to the inner generational_arena which stores the modulators.
-    pub fn get_mods(&self) -> &Arena<Box<dyn Modulator<T>>> {
-        &self.mods
-    }
-
-    /// Try to fetch an immutable reference to the modulator with the given handle
-    pub fn get(&self, handle: ModulatorHandle) -> Option<&Box<dyn Modulator<T>>> {
-        self.mods.get(handle.0)
-    }
-
-    /// Try to fetch an mutable reference to the modulator with the given handle
-    pub fn get_mut(&mut self, handle: ModulatorHandle) -> Option<&mut Box<dyn Modulator<T>>> {
-        self.mods.get_mut(handle.0)
-    }
-
-    /// Return the current value of the given modulator
-    pub fn value(&self, handle: ModulatorHandle) -> T {
-        match self.get(handle) {
-            Some(modulator) if modulator.enabled() => modulator.value(),
-            Some(_) => T::default(),
-            None => T::default(),
-        }
-    }
-
-    /// Return the range of the given modulator
-    pub fn range(&self, handle: ModulatorHandle) -> Option<[T; 2]> {
-        match self.get(handle) {
-            Some(modulator) if modulator.enabled() => modulator.range(),
-            _ => None,
-        }
-    }
-
-    /// Return the current goal of the given modulator
-    pub fn goal(&self, handle: ModulatorHandle) -> Option<T> {
-        match self.get(handle) {
-            Some(modulator) if modulator.enabled() => modulator.goal(),
-            _ => None,
-        }
-    }
-
-    /// Return the current value of the given modulator
-    pub fn elapsed_us(&self, handle: ModulatorHandle) -> u64 {
-        match self.get(handle) {
-            Some(modulator) => modulator.elapsed_us(),
-            None => 0,
-        }
-    }
-
-    /// Advance all owned modulators by dt microseconds
-    pub fn advance(&mut self, dt: u64) {
-        for (_, m) in self.mods.iter_mut() {
-            if m.enabled() {
-                m.advance(dt);
             }
         }
     }

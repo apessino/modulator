@@ -12,7 +12,15 @@ A trait for abstracted, decoupled modulation sources. This crate includes:
   1. The `Modulator<T>` trait definition
   2. An environment (host) type for modulators `ModulatorEnv<T>`
   3. A number of ready to use types that implement the modulator trait
-  
+
+**Changes in version 0.3.0**
+
+- Updated to Rust 2021 edition
+- Update to latest version of `rand`, propagated API changes
+- Replaced the hash used by the modulator environment with `metro` - we don't really care about hash safety for the env, and metro is much faster than the default `std` hasher
+- (Repo only) Fixed a bug in `Newtonian` introduced by a merged PR; this change was never published
+- (Repo only) Removed dependencies and arena-based env, which were added by a merged PR but had issues; this change was never published
+
 **Introduction**
 -----
 
@@ -370,4 +378,4 @@ default `age_range` is set to [u32::MAX, u32::MAX] so the odds never change.
 The result is that the shift register is periodic and exhibits a pattern (given low
 enough odds), but still evolves over time in an organic way.
 
-Copyright© 2018 Ready At Dawn Studios
+Copyright© 2018-22 Ready At Dawn Studios

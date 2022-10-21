@@ -1,32 +1,30 @@
-//!
 //! # Modulator Sources
-//!
 //! A collection of types that implement the Modulator trait
-//!
-//! Copyright© 2018 Ready At Dawn Studios
 
 use rand::prelude::*;
 
-use std::f32;
 use std::any::Any;
+use std::f32;
 
 use crate::Modulator;
 use crate::ModulatorEnv;
 
-///
 /// Simple modulator using a value closure/`Fn`, with frequency and amplitude. The
 /// closure receives self, elapsed time (in seconds) and returns a new value.
-//
 pub struct Wave {
     pub amplitude: f32,
     pub frequency: f32,
 
-    pub wave: Box<dyn Fn(&Wave, f32) -> f32>, // wave closure, receives self and time in s
+    /// Wave closure, receives self and time in s
+    pub wave: Box<dyn Fn(&Wave, f32) -> f32>,
 
-    pub time: u64,  // accumulated microseconds
-    pub value: f32, // current value
+    /// Accumulated microseconds
+    pub time: u64,
+    /// Current value
+    pub value: f32,
 
-    pub enabled: bool, // enabling toggle
+    /// Enabling toggle
+    pub enabled: bool,
 }
 
 impl Wave {
@@ -88,26 +86,30 @@ impl Modulator<f32> for Wave {
     }
 }
 
-///
 /// Critically damped spring modulator. Moves towards its set `goal` with `smooth` seconds
 /// of delay, critically damping its arrival so it slows down and stops at the goal without
 /// overshooting or oscillation.
 ///
 /// If overshooting is desired, positive values of `undamp` can be set to add artificial
 /// overshoot/oscillations around the goal.
-///
-
 pub struct ScalarSpring {
-    pub smooth: f32, // spring delay (smoothing), in seconds
-    pub undamp: f32, // artificial undamping (adds overshoot)
+    /// Spring delay (smoothing), in seconds
+    pub smooth: f32,
+    /// Artificial undamping (adds overshoot)
+    pub undamp: f32,
 
-    pub goal: f32,  // current target for the spring
-    pub value: f32, // current position of the spring (value)
+    /// Current target for the spring
+    pub goal: f32,
+    /// Current position of the spring (value)
+    pub value: f32,
 
-    pub vel: f32,  // current velocity
-    pub time: u64, // accumulated microseconds
+    /// Current velocity
+    pub vel: f32,
+    /// Accumulated microseconds
+    pub time: u64,
 
-    pub enabled: bool, // enabling toggle
+    /// Enabling toggle
+    pub enabled: bool,
 }
 
 impl ScalarSpring {
@@ -189,7 +191,6 @@ impl Modulator<f32> for ScalarSpring {
     }
 }
 
-///
 /// A programmable goal follower. Picks a `goal` within one of its `regions` for its owned
 /// `follower` modulator, then  monitor its progress until the follower gets to `threshold`
 /// distance to the goal and has velocity of `vel_threshold` or less, at which point it
@@ -201,24 +202,32 @@ impl Modulator<f32> for ScalarSpring {
 /// This modulator can be given any other modulator type as its owned `follower`, but a
 /// type that is unable to pursue and arrive to its given `goal` is, of course, never going
 /// to satisfy the conditions for arrival.
-///
-
 pub struct ScalarGoalFollower {
-    pub regions: Vec<[f32; 2]>, // set of regions to pick goals from
-    pub random_region: bool,    //  cycle regions randomly instead of sequentially
+    /// Set of regions to pick goals from
+    pub regions: Vec<[f32; 2]>,
+    /// Cycle regions randomly instead of sequentially
+    pub random_region: bool,
 
-    pub threshold: f32, // threshold to consider a goal reached and move on to next one
-    pub vel_threshold: f32, // as above, but for velocity
+    /// Threshold to consider a goal reached and move on to next one
+    pub threshold: f32,
+    /// As above, but for velocity
+    pub vel_threshold: f32,
 
-    pub pause_range: [u64; 2], // range of pause microseconds to pick between goals
+    /// Range of pause microseconds to pick between goals
+    pub pause_range: [u64; 2],
 
-    pub follower: Box<dyn Modulator<f32>>, // the modulator that follows the current goal
+    /// Modulator that follows the current goal
+    pub follower: Box<dyn Modulator<f32>>,
 
-    pub current_region: usize, // index of last region used to set the goal
-    pub paused_left: u64,      // when set, number of microseconds until the pause ends
-    pub time: u64,             // accumulated microseconds
+    /// Index of last region used to set the goal
+    pub current_region: usize,
+    /// When set, number of microseconds until the pause ends
+    pub paused_left: u64,
+    /// Accumulated microseconds
+    pub time: u64,
 
-    pub enabled: bool, // enabling toggle
+    /// Enabling toggle
+    pub enabled: bool,
 }
 
 impl ScalarGoalFollower {
@@ -248,7 +257,7 @@ impl ScalarGoalFollower {
         let n = self.regions.len(); // current number of regions, if 0 we do nothing here
         if n > 0 {
             self.current_region = if self.random_region {
-                thread_rng().gen_range(0, n)
+                thread_rng().gen_range(0..n)
             } else if self.current_region + 1 < n {
                 self.current_region + 1
             } else {
@@ -257,7 +266,7 @@ impl ScalarGoalFollower {
 
             let region = &self.regions[self.current_region]; // region we are going to
             let goal = if region[1] > region[0] {
-                thread_rng().gen_range(region[0], region[1])
+                thread_rng().gen_range(region[0]..region[1])
             } else {
                 region[0]
             };
@@ -333,7 +342,7 @@ impl Modulator<f32> for ScalarGoalFollower {
             }
 
             self.paused_left = if self.pause_range[1] > self.pause_range[0] {
-                thread_rng().gen_range(self.pause_range[0], self.pause_range[1])
+                thread_rng().gen_range(self.pause_range[0]..self.pause_range[1])
             } else {
                 self.pause_range[0]
             };
@@ -349,7 +358,6 @@ impl Modulator<f32> for ScalarGoalFollower {
     }
 }
 
-///
 /// A modulator that uses classical mechanics to move to its `goal` - it guarantees smooth
 /// acceleration, deceleration and speed limiting regardless of settings.
 ///
@@ -365,25 +373,35 @@ impl Modulator<f32> for ScalarGoalFollower {
 /// speed max. If there is not enough time to reach peak speed, the value accelerates as
 /// much as it it can while ensuring that it will decelerate and come to a stop (0 speed)
 /// exactly at `goal`.
-///
-
 pub struct Newtonian {
-    pub speed_limit: [f32; 2], // max speed range, selected on new goal
+    /// Max speed range, selected on new goal
+    pub speed_limit: [f32; 2],
 
-    pub acceleration: [f32; 2], // range of acceleration values selected on new goal
-    pub deceleration: [f32; 2], // range of deceleration values selected on new goal
+    /// range of acceleration values selected on new goal
+    pub acceleration: [f32; 2],
+    /// range of deceleration values selected on new goal
+    pub deceleration: [f32; 2],
 
-    pub goal: f32,  // current goal
-    pub value: f32, // current position of the particle (value)
+    // Current goal
+    pub goal: f32,
+    // Current position of the particle (value)
+    pub value: f32,
 
-    pub time: u64,     // accumulated microseconds since the most recent goal was set
-    pub enabled: bool, // enabling toggle
+    /// Accumulated microseconds since the most recent goal was set
+    pub time: u64,
+    /// Enabling toggle
+    pub enabled: bool,
 
-    s: f32,      // speed selected for the current goal
-    a: f32,      // accel selected towards the goal
-    d: f32,      // decel selected towards the goal
-    f: f32,      // location we started moving from
-    t: [f32; 3], // phase times: t[0] accel, t[1] sustain, t[2] decel
+    // Speed selected for the current goal
+    s: f32,
+    // Accel selected towards the goal
+    a: f32,
+    // Decel selected towards the goal
+    d: f32,
+    // Location we started moving from
+    f: f32,
+    // Phase times: t[0] accel, t[1] sustain, t[2] decel
+    t: [f32; 3],
 }
 
 impl Newtonian {
@@ -498,7 +516,7 @@ impl Newtonian {
     /// Get a value in the given range (need the test since gen_range panics on a null range)
     fn gen_value(r: &[f32]) -> f32 {
         if r[1] > r[0] {
-            thread_rng().gen_range(r[0], r[1])
+            thread_rng().gen_range(r[0]..r[1])
         } else {
             r[0]
         }
@@ -508,6 +526,13 @@ impl Newtonian {
 impl Modulator<f32> for Newtonian {
     fn value(&self) -> f32 {
         self.value
+    }
+
+    fn goal(&self) -> Option<f32> {
+        Some(self.value)
+    }
+    fn set_goal(&mut self, goal: f32) {
+        self.move_to(goal);
     }
 
     fn elapsed_us(&self) -> u64 {
@@ -540,7 +565,6 @@ impl Modulator<f32> for Newtonian {
     }
 }
 
-///
 /// Inspired by classic analog shift registers like those used in Buchla synthesizers, this
 /// modulator has a vector of values `buckets` containing values selected from `value_range`.
 ///
@@ -566,30 +590,41 @@ impl Modulator<f32> for Newtonian {
 ///
 /// The result is that the shift register is periodic and exhibits a pattern (given low
 /// enough odds), but still evolves over time in an organic way.
-///
-
 pub struct ShiftRegister {
-    pub buckets: Vec<f32>, // current array of values
-    pub ages: Vec<u32>,    // symmetrical array of value ages (number of periods since updating)
+    /// Current array of values
+    pub buckets: Vec<f32>,
+    /// Symmetrical array of value ages (number of periods since updating)
+    pub ages: Vec<u32>,
 
-    pub value_range: [f32; 2], // range of values selected when picking a bucket value [..)
-    pub odds: f32, // odds of changing a bucket's value as it is left, 0..1 (0 = never, 1 = always)
-    pub age_range: [u32; 2], // min/max range over which the odds increase to 100%
+    /// Range of values selected when picking a bucket value [..)
+    pub value_range: [f32; 2],
+    /// Odds of changing a bucket's value as it is left, 0..1 (0 = never, 1 = always)
+    pub odds: f32,
+    /// Min/max range over which the odds increase to 100%
+    pub age_range: [u32; 2],
 
-    pub period: f32,                 // duration of a register loop, in seconds
-    pub interp: ShiftRegisterInterp, // interpolation type
+    /// Duration of a register loop, in seconds
+    pub period: f32,
+    /// Interpolation type
+    pub interp: ShiftRegisterInterp,
 
-    pub time: u64,  // accumulated microseconds, local time within the register loop
-    pub value: f32, // current value
+    /// Accumulated microseconds, local time within the register loop
+    pub time: u64,
+    /// Current value
+    pub value: f32,
 
-    pub enabled: bool, // enabling toggle
+    /// Enabling toggle
+    pub enabled: bool,
 }
 
 /// Available choices of interpolation for shift registers
 pub enum ShiftRegisterInterp {
-    Linear,    // linearly interpolate between samples
-    Quadratic, // quadratic interpolation between the samples
-    None,      // no interpolation, buckets are read directly
+    /// Linearly interpolate between samples
+    Linear,
+    /// Quadratic interpolation between the samples
+    Quadratic,
+    /// No interpolation, buckets are read directly
+    None,
 }
 
 impl ShiftRegister {
@@ -626,7 +661,7 @@ impl ShiftRegister {
     fn new_buckets(buckets: usize, range: &[f32; 2]) -> Vec<f32> {
         let mut b = Vec::with_capacity(buckets);
         for _ in 0..buckets {
-            b.push(thread_rng().gen_range(range[0], range[1]));
+            b.push(thread_rng().gen_range(range[0]..range[1]));
         }
         b // moves it out
     }
@@ -716,8 +751,8 @@ impl Modulator<f32> for ShiftRegister {
                 odds = odds + (1.0 - odds) * t;
             }
 
-            if thread_rng().gen_range(0.0, 1.0) < odds {
-                self.buckets[bh] = thread_rng().gen_range(self.value_range[0], self.value_range[1]);
+            if thread_rng().gen_range(0.0..1.0) < odds {
+                self.buckets[bh] = thread_rng().gen_range(self.value_range[0]..self.value_range[1]);
                 self.ages[bh] = 0;
             } else {
                 self.ages[bh] += 1; // another period without changing value
