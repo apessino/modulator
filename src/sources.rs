@@ -95,7 +95,7 @@ impl Modulator<f32> for Wave {
 pub struct ScalarSpring {
     /// Spring delay (smoothing), in seconds
     pub smooth: f32,
-    /// Artificial undamping (adds overshoot)
+    /// Amount of damping to remove (0..1)
     pub undamp: f32,
 
     /// Current target for the spring

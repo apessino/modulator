@@ -13,6 +13,14 @@ A trait for abstracted, decoupled modulation sources. This crate includes:
   2. An environment (host) type for modulators `ModulatorEnv<T>`
   3. A number of ready to use types that implement the modulator trait
 
+**Changes in version 0.4.0**
+
+- Revised behavior for `ScalarSpring::undamp` parameter
+-- Domain is now between 0.0 (full damping) and 1.0 (all damping removed)
+-- Undamped spring simulation is unconditionally stable for any size timestamp
+-- When `undamp==1.0` spring can oscillate indefinitely
+-- Spring oscillation will lose energy proportional to the timestep duration
+
 **Changes in version 0.3.0**
 
 - Updated to Rust 2021 edition
