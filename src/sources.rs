@@ -171,18 +171,19 @@ impl Modulator<f32> for ScalarSpring {
             self.vel = 0.0;
         } else {
             let dt = ModulatorEnv::<f32>::micros_to_secs(dt);
+            let (p, q, v) = (self.value - self.goal, self.goal, self.vel);
 
-            let omega = 2.0 / self.smooth;
-            let x = omega * dt;
-            let ex = 1.0 / x.exp();
-            let ud = dt * self.undamp;
+            let b = self.undamp * 2.0 - 1.0;
+            let k = 2.0 / self.smooth;
 
-            let d = self.value - self.goal;
-            let t = (self.vel + omega * d) * dt;
-            let v = self.vel;
+            let (kp, kdt) = (k * p, k * dt);
+            let ix = (-kdt).exp();
 
-            self.vel = (v - omega * t) * ex + v * ud;
-            self.value = self.goal + (d + t) * ex;
+            let dp = (v + kp) * dt;
+            let dv = (v * b - kp) * kdt;
+
+            self.value = (p + dp) * ix + q;
+            self.vel = (v + dv) * ix;
         }
     }
 
