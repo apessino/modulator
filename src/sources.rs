@@ -395,13 +395,13 @@ pub struct Newtonian {
 
     // Speed selected for the current goal
     s: f32,
-    // Accel selected towards the goal
+    // Accelerate selected towards the goal
     a: f32,
-    // Decel selected towards the goal
+    // Decelerate selected towards the goal
     d: f32,
     // Location we started moving from
     f: f32,
-    // Phase times: t[0] accel, t[1] sustain, t[2] decel
+    // Phase times: t[0] accel, t[1] sustain, t[2] decelerate
     t: [f32; 3],
 }
 
@@ -482,10 +482,10 @@ impl Newtonian {
             v = self.s;
             self.t[0] = self.s / a; // back up to when we hit the limit
         } else {
-            self.s = v; // will be needed to back off from overshot decel range
+            self.s = v; // will be needed to back off from overshot decelerate range
         }
 
-        self.t[2] = self.t[0] * r; // ratio converts one accel into decel
+        self.t[2] = self.t[0] * r; // ratio converts one acceleration into deceleration
 
         let d0 = self.t[0] * self.t[0] * a * 0.5;
         let d2 = self.t[2] * self.t[2] * d * 0.5;
