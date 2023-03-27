@@ -330,11 +330,10 @@ impl Modulator<f32> for ScalarGoalFollower {
             let p1 = self.follower.value();
 
             let secs = ModulatorEnv::<f32>::micros_to_secs(dt);
-            let vel = if secs > f32::MIN {
-                (p1 - p0) / secs
-            } else {
-                0.0
-            };
+            let mut vel = (p1 - p0) / secs;
+            if vel.is_finite() == false {
+                vel = 0.0;
+            }
 
             if (p1 - self.follower.goal().unwrap()).abs() > self.threshold
                 || vel.abs() > self.vel_threshold
