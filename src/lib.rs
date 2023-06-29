@@ -410,6 +410,13 @@ pub trait Modulator<T> {
     }
     /// Set a goal for the modulator to move towards, if possible.
     fn set_goal(&mut self, _goal: T) {}
+
+    /// A modulator can respond to a change in "energy" if meaningful
+    fn energy(&self) -> f32 {
+        1.0
+    }
+    /// Set the overall energy of the modulator - ignored if not used
+    fn set_energy(&mut self, _energy: f32) {}
 }
 
 /// A host for modulators, homogeneous in type T for the value of its modulators,
@@ -440,6 +447,10 @@ impl<T: Default> ModulatorEnv<T> {
     pub fn get_mods(&self) -> &MetroHashMap<String, Box<dyn Modulator<T>>> {
         &self.mods
     }
+    /// Take a mutable reference to the mods table
+    pub fn get_mods_mut(&mut self) -> &mut MetroHashMap<String, Box<dyn Modulator<T>>> {
+        &mut self.mods
+    }
 
     /// Try to fetch an immutable reference to the modulator with the given key
     pub fn get(&self, key: &str) -> Option<&Box<dyn Modulator<T>>> {
@@ -453,8 +464,7 @@ impl<T: Default> ModulatorEnv<T> {
     /// Return the current value of the given modulator
     pub fn value(&self, key: &str) -> T {
         match self.get(key) {
-            Some(modulator) if modulator.enabled() => modulator.value(),
-            Some(_) => T::default(),
+            Some(modulator) => modulator.value(),
             None => T::default(),
         }
     }
@@ -462,14 +472,14 @@ impl<T: Default> ModulatorEnv<T> {
     /// Return the range of the given modulator
     pub fn range(&self, key: &str) -> Option<[T; 2]> {
         match self.get(key) {
-            Some(modulator) if modulator.enabled() => modulator.range(),
+            Some(modulator) => modulator.range(),
             _ => None,
         }
     }
     /// Return the current goal of the given modulator
     pub fn goal(&self, key: &str) -> Option<T> {
         match self.get(key) {
-            Some(modulator) if modulator.enabled() => modulator.goal(),
+            Some(modulator) => modulator.goal(),
             _ => None,
         }
     }

@@ -319,6 +319,13 @@ impl Modulator<f32> for ScalarGoalFollower {
         self.enabled = enabled;
     }
 
+    fn energy(&self) -> f32 {
+        self.follower.energy()
+    }
+    fn set_energy(&mut self, energy: f32) {
+        self.follower.set_energy(energy);
+    }
+
     fn advance(&mut self, dt: u64) {
         self.time += dt;
 
@@ -391,6 +398,8 @@ pub struct Newtonian {
     pub time: u64,
     /// Enabling toggle
     pub enabled: bool,
+    /// Overall energy of the motion
+    pub energy: f32,
 
     // Speed selected for the current goal
     s: f32,
@@ -423,6 +432,7 @@ impl Newtonian {
 
             time: 0,
             enabled: true,
+            energy: 1.0,
 
             s: 0.0,
             a: 0.0,
@@ -449,11 +459,26 @@ impl Newtonian {
         self.time = 0; // for this modulator time is elapsed us in goal
         self.goal = goal;
 
-        self.s = Newtonian::gen_value(&self.speed_limit);
-        self.a = Newtonian::gen_value(&self.acceleration);
-        self.d = Newtonian::gen_value(&self.deceleration);
-        self.f = self.value;
+        let en = self.energy.powf(2.2);
 
+        let speed_limit = [
+            self.speed_limit[0],
+            self.speed_limit[0] + (self.speed_limit[1] - self.speed_limit[0]) * en,
+        ];
+        let acceleration = [
+            self.acceleration[0],
+            self.acceleration[0] + (self.acceleration[1] - self.acceleration[0]) * en,
+        ];
+        let deceleration = [
+            self.deceleration[0],
+            self.deceleration[0] + (self.deceleration[1] - self.acceleration[0]) * en,
+        ];
+
+        self.s = Newtonian::gen_value(&speed_limit);
+        self.a = Newtonian::gen_value(&acceleration);
+        self.d = Newtonian::gen_value(&deceleration);
+
+        self.f = self.value;
         self.calculate_events();
     }
 
@@ -543,6 +568,12 @@ impl Modulator<f32> for Newtonian {
     }
     fn set_enabled(&mut self, enabled: bool) {
         self.enabled = enabled;
+    }
+    fn energy(&self) -> f32 {
+        self.energy
+    }
+    fn set_energy(&mut self, energy: f32) {
+        self.energy = energy;
     }
 
     fn advance(&mut self, dt: u64) {
