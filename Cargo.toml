@@ -14,4 +14,4 @@ readme = "readme.md"
 
 [dependencies]
 rand = "0.8.5"
-metrohash = "1.0.6"
+metrohash = "1.0.7"
