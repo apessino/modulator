@@ -3,7 +3,7 @@ name = "modulator"
 version = "0.4.0"
 edition = "2021"
 description = "A trait for abstracted, decoupled modulation sources"
-authors = ["Andrea Pessino <andrea@readyatdawn.com>"]
+authors = ["Andrea Pessino"]
 categories = ["simulation", "game-engines", "gui"]
 
 keywords = ["animation", "spring", "physics", "game", "engine"]
