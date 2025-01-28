@@ -1,6 +1,6 @@
 [package]
 name = "modulator"
-version = "0.4.0"
+version = "0.4.1"
 edition = "2021"
 description = "A trait for abstracted, decoupled modulation sources"
 authors = ["Andrea Pessino"]
@@ -13,5 +13,5 @@ repository = "https://github.com/apessino/modulator"
 readme = "readme.md"
 
 [dependencies]
-rand = "0.8.5"
+rand = "0.9.0"
 metrohash = "1.0.7"

@@ -1,7 +1,7 @@
 //! # Modulator Sources
 //! A collection of types that implement the Modulator trait
 
-use rand::prelude::*;
+use rand::{rng, Rng};
 
 use std::any::Any;
 use std::f32;
@@ -258,7 +258,7 @@ impl ScalarGoalFollower {
         let n = self.regions.len(); // current number of regions, if 0 we do nothing here
         if n > 0 {
             self.current_region = if self.random_region {
-                thread_rng().gen_range(0..n)
+                rng().random_range(0..n)
             } else if self.current_region + 1 < n {
                 self.current_region + 1
             } else {
@@ -267,7 +267,7 @@ impl ScalarGoalFollower {
 
             let region = &self.regions[self.current_region]; // region we are going to
             let goal = if region[1] > region[0] {
-                thread_rng().gen_range(region[0]..region[1])
+                rng().random_range(region[0]..region[1])
             } else {
                 region[0]
             };
@@ -349,7 +349,7 @@ impl Modulator<f32> for ScalarGoalFollower {
             }
 
             self.paused_left = if self.pause_range[1] > self.pause_range[0] {
-                thread_rng().gen_range(self.pause_range[0]..self.pause_range[1])
+                rng().random_range(self.pause_range[0]..self.pause_range[1])
             } else {
                 self.pause_range[0]
             };
@@ -538,10 +538,10 @@ impl Newtonian {
         s * t
     }
 
-    /// Get a value in the given range (need the test since gen_range panics on a null range)
+    /// Get a value in the given range (need the test since random_range panics on a null range)
     fn gen_value(r: &[f32]) -> f32 {
         if r[1] > r[0] {
-            thread_rng().gen_range(r[0]..r[1])
+            rng().random_range(r[0]..r[1])
         } else {
             r[0]
         }
@@ -692,7 +692,7 @@ impl ShiftRegister {
     fn new_buckets(buckets: usize, range: &[f32; 2]) -> Vec<f32> {
         let mut b = Vec::with_capacity(buckets);
         for _ in 0..buckets {
-            b.push(thread_rng().gen_range(range[0]..range[1]));
+            b.push(rng().random_range(range[0]..range[1]));
         }
         b // moves it out
     }
@@ -782,8 +782,8 @@ impl Modulator<f32> for ShiftRegister {
                 odds = odds + (1.0 - odds) * t;
             }
 
-            if thread_rng().gen_range(0.0..1.0) < odds {
-                self.buckets[bh] = thread_rng().gen_range(self.value_range[0]..self.value_range[1]);
+            if rng().random_range(0.0..1.0) < odds {
+                self.buckets[bh] = rng().random_range(self.value_range[0]..self.value_range[1]);
                 self.ages[bh] = 0;
             } else {
                 self.ages[bh] += 1; // another period without changing value

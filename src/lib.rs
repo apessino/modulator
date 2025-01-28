@@ -396,7 +396,7 @@ pub trait Modulator<T> {
     /// Toggle enabling/disabling the modulator
     fn set_enabled(&mut self, enabled: bool);
 
-    /// Allow donwcasting.
+    /// Allow downcasting.
     fn as_any(&mut self) -> &mut dyn Any;
 
     /// Range of the modulator as min..=max, or None if the range is indeterminate.
