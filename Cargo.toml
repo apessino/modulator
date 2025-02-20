@@ -1,7 +1,7 @@
 [package]
 name = "modulator"
 version = "0.4.1"
-edition = "2021"
+edition = "2024"
 description = "A trait for abstracted, decoupled modulation sources"
 authors = ["Andrea Pessino"]
 categories = ["simulation", "game-engines", "gui"]
