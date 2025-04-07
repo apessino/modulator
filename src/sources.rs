@@ -1,7 +1,7 @@
 //! # Modulator Sources
 //! A collection of types that implement the Modulator trait
 
-use rand::{rng, Rng};
+use rand::{Rng, rng};
 
 use std::any::Any;
 use std::f32;
@@ -717,21 +717,13 @@ impl ShiftRegister {
     /// Return the bucket index after the one we are given
     fn next_bucket(&self, i: usize, n: usize) -> usize {
         debug_assert!(n > 0);
-        if i < n - 1 {
-            i + 1
-        } else {
-            0
-        }
+        if i < n - 1 { i + 1 } else { 0 }
     }
 
     /// Return the bucket index before the one we are given
     fn previous_bucket(&self, i: usize, n: usize) -> usize {
         debug_assert!(n > 0);
-        if i > 0 {
-            i - 1
-        } else {
-            n - 1
-        }
+        if i > 0 { i - 1 } else { n - 1 }
     }
 }
 

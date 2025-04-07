@@ -381,7 +381,7 @@ use metrohash::MetroHashMap;
 pub mod sources;
 
 /// Modulators provide animated modulation. T is the generic type of the modulator value.
-pub trait Modulator<T> {
+pub trait Modulator<T: Clone> {
     /// Value of the modulator at the current time.
     fn value(&self) -> T;
 
@@ -422,11 +422,11 @@ pub trait Modulator<T> {
 /// A host for modulators, homogeneous in type T for the value of its modulators,
 /// stored in a HashMap for convenience and rapid prototyping.
 #[derive(Default)]
-pub struct ModulatorEnv<T> {
+pub struct ModulatorEnv<T: Clone> {
     mods: MetroHashMap<String, Box<dyn Modulator<T>>>, // live modulators
 }
 
-impl<T: Default> ModulatorEnv<T> {
+impl<T: Default + Clone> ModulatorEnv<T> {
     /// Create an empty ModulatorEnv
     pub fn new() -> Self {
         ModulatorEnv {
