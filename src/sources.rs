@@ -1,7 +1,7 @@
 //! # Modulator Sources
 //! A collection of types that implement the Modulator trait
 
-use rand::{Rng, rng};
+use rand::{RngExt, rng};
 
 use std::any::Any;
 use std::f32;
