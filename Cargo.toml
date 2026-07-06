@@ -13,5 +13,5 @@ repository = "https://github.com/apessino/modulator"
 readme = "readme.md"
 
 [dependencies]
-rand = "0.10.1"
+rand = "0.10.2"
 metrohash = "1.0.7"
